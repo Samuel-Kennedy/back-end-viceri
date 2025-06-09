@@ -25,6 +25,8 @@ exports.cadastrar = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  console.log('JWT_SECRET no login:', process.env.JWT_SECRET); // <--- aqui
+
   const { email, senha } = req.body;
 
   const usuario = usuarios.find(u => u.email === email);
@@ -37,3 +39,4 @@ exports.login = async (req, res) => {
 
   res.json({ token });
 };
+
