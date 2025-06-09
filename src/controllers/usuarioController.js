@@ -40,3 +40,4 @@ exports.login = async (req, res) => {
   res.json({ token });
 };
 
+exports.usuarios = usuarios;

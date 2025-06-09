@@ -38,7 +38,6 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Aqui que você monta o Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(express.json());
@@ -66,4 +65,7 @@ app.get('/api/perfil', autenticarToken, (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
+
+module.exports = { app, server };
+
