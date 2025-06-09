@@ -21,6 +21,8 @@ Este projeto é uma API RESTful desenvolvida em **Node.js** com **Express**, que
 
 ## 📦 Como rodar o projeto localmente
 
+-node src/index.js
+
 ### ✅ Pré-requisitos
 
 - Node.js (v14 ou superior)  

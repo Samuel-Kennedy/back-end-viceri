@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1749497210807" clover="3.2.0">
-  <project timestamp="1749497210808" name="All files">
+<coverage generated="1749498062033" clover="3.2.0">
+  <project timestamp="1749498062033" name="All files">
     <metrics statements="142" coveredstatements="138" conditionals="41" coveredconditionals="37" methods="26" coveredmethods="24" elements="209" coveredelements="199" complexity="0" loc="142" ncloc="142" packages="6" files="11" classes="11"/>
     <package name="src">
       <metrics statements="26" coveredstatements="25" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="3"/>
@@ -16,16 +16,16 @@
         <line num="10" count="1" type="stmt"/>
         <line num="12" count="1" type="stmt"/>
         <line num="39" count="1" type="stmt"/>
-        <line num="42" count="1" type="stmt"/>
-        <line num="44" count="1" type="stmt"/>
+        <line num="41" count="1" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
         <line num="46" count="1" type="stmt"/>
-        <line num="47" count="1" type="stmt"/>
-        <line num="49" count="1" type="stmt"/>
-        <line num="64" count="1" type="stmt"/>
-        <line num="65" count="0" type="stmt"/>
-        <line num="68" count="1" type="cond" truecount="2" falsecount="0"/>
-        <line num="69" count="1" type="stmt"/>
-        <line num="71" count="1" type="stmt"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="64" count="0" type="stmt"/>
+        <line num="67" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="68" count="1" type="stmt"/>
+        <line num="70" count="1" type="stmt"/>
       </file>
       <file name="swagger.js" path="D:\projetos-samuel\projetos-viceri\back-end-viceri\src\swagger.js">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
@@ -110,7 +110,7 @@
         <line num="36" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="38" count="1" type="stmt"/>
         <line num="40" count="1" type="stmt"/>
-        <line num="44" count="2" type="stmt"/>
+        <line num="43" count="2" type="stmt"/>
       </file>
     </package>
     <package name="src.database">
