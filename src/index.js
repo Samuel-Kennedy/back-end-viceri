@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const cors = require('cors');
 require('dotenv').config();
 
 const swaggerJsDoc = require('swagger-jsdoc');
@@ -9,6 +10,7 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const tarefaRoutes = require('./routes/tarefaRoutes');
 const autenticarToken = require('./middlewares/authMiddleware');
 
+app.use(cors());
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",

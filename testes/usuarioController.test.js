@@ -7,7 +7,9 @@ jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 
 beforeEach(() => {
-  controller.usuarios.length = 0; // limpa usuários
+  // Limpa usuários e mocks antes de cada teste
+  controller.usuarios = [];
+  jest.clearAllMocks();
 });
 
 describe('cadastrar', () => {

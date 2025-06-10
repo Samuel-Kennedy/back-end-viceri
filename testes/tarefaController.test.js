@@ -1,96 +1,112 @@
+const controller = require('../src/controllers/tarefaController');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const httpMocks = require('node-mocks-http');
+const knex = require('../src/database/connection');
 
-const controller = require('../src/controllers/tarefaController');
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn()
+}));
+
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn()
+}));
+
+// Mock do knex para funções usadas
+jest.mock('../src/database/connection', () => {
+  const mKnex = jest.fn(() => mKnex);
+  mKnex.insert = jest.fn(() => Promise.resolve([1]));
+  mKnex.where = jest.fn(() => Promise.resolve({
+    first: jest.fn(() => Promise.resolve({
+      id: 1,
+      descricao: 'Fazer teste',
+      prioridade: 'Alta',
+      usuario_id: 1,
+      status: 'pendente'
+    }))
+  }));
+  mKnex.andWhere = jest.fn(() => mKnex);
+  mKnex.orderBy = jest.fn(() => Promise.resolve([
+    { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' },
+    { id: 2, descricao: 'tarefa2', prioridade: 'Baixa', usuario_id: 1, status: 'pendente' }
+  ]));
+  mKnex.where = jest.fn(() => mKnex);
+  return mKnex;
+});
 
 describe('criarTarefa', () => {
-  beforeEach(() => {
-    controller.tarefas.length = 0;
-    controller.tarefaIdCounter = 1;
-  });
-
-  it('cria tarefa com dados válidos', () => {
+  it('cria tarefa com dados válidos', async () => {
     const req = httpMocks.createRequest({
       body: { descricao: 'Fazer teste', prioridade: 'Alta' },
       usuario: { id: 1 }
     });
     const res = httpMocks.createResponse();
 
-    controller.criarTarefa(req, res);
+    await controller.criarTarefa(req, res);
 
     expect(res.statusCode).toBe(201);
     const data = res._getJSONData();
     expect(data.mensagem).toBe('Tarefa criada com sucesso');
     expect(data.tarefa.descricao).toBe('Fazer teste');
     expect(data.tarefa.prioridade).toBe('Alta');
-    expect(data.tarefa.usuarioId).toBe(1);
+    expect(data.tarefa.usuario_id).toBe(1);
     expect(data.tarefa.status).toBe('pendente');
   });
 
-  it('retorna erro 400 se faltar descrição ou prioridade', () => {
+  it('retorna erro 400 se faltar descrição ou prioridade', async () => {
     const req = httpMocks.createRequest({
       body: { descricao: '', prioridade: '' },
       usuario: { id: 1 }
     });
     const res = httpMocks.createResponse();
 
-    controller.criarTarefa(req, res);
+    await controller.criarTarefa(req, res);
 
     expect(res.statusCode).toBe(400);
   });
 
-  it('retorna erro 400 se prioridade inválida', () => {
+  it('retorna erro 400 se prioridade inválida', async () => {
     const req = httpMocks.createRequest({
       body: { descricao: 'Teste', prioridade: 'Urgente' },
       usuario: { id: 1 }
     });
     const res = httpMocks.createResponse();
 
-    controller.criarTarefa(req, res);
+    await controller.criarTarefa(req, res);
 
     expect(res.statusCode).toBe(400);
   });
 });
 
-
 describe('listarTarefasPendentes', () => {
-  beforeEach(() => {
-    
-
-    controller.tarefas.length = 0;
-    controller.tarefaIdCounter = 1;
-
-    controller.tarefas.push(
-      { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuarioId: 1, status: 'pendente' },
-      { id: 2, descricao: 'tarefa2', prioridade: 'Baixa', usuarioId: 1, status: 'pendente' },
-      { id: 3, descricao: 'tarefa3', prioridade: 'Média', usuarioId: 2, status: 'pendente' },
-      { id: 4, descricao: 'tarefa4', prioridade: 'Alta', usuarioId: 1, status: 'concluida' }
-    );
-  });
-
-  it('lista apenas tarefas pendentes do usuário', () => {
+  it('lista apenas tarefas pendentes do usuário', async () => {
     const req = httpMocks.createRequest({
       usuario: { id: 1 },
       query: {}
     });
     const res = httpMocks.createResponse();
 
-    controller.listarTarefasPendentes(req, res);
+    await controller.listarTarefasPendentes(req, res);
 
     const data = res._getJSONData();
     expect(data.length).toBe(2);
-    expect(data.every(t => t.usuarioId === 1 && t.status === 'pendente')).toBe(true);
+    expect(data.every(t => t.usuario_id === 1 && t.status === 'pendente')).toBe(true);
   });
 
-  it('filtra por prioridade', () => {
+  it('filtra por prioridade', async () => {
+    // Ajuste do mock para responder só com prioridade 'Alta'
+    knex.orderBy = jest.fn(() => Promise.resolve([
+      { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' }
+    ]));
+
     const req = httpMocks.createRequest({
       usuario: { id: 1 },
       query: { prioridade: 'Alta' }
     });
     const res = httpMocks.createResponse();
 
-    controller.listarTarefasPendentes(req, res);
+    await controller.listarTarefasPendentes(req, res);
 
     const data = res._getJSONData();
     expect(data.length).toBe(1);
@@ -98,11 +114,9 @@ describe('listarTarefasPendentes', () => {
   });
 });
 
-jest.mock('bcrypt');
-jest.mock('jsonwebtoken');
-
 describe('cadastrar', () => {
   beforeEach(() => {
+    // Limpa array de usuários para cada teste
     controller.usuarios.length = 0;
     bcrypt.hash.mockClear();
   });
@@ -145,13 +159,12 @@ describe('login', () => {
     jwt.sign.mockClear();
   });
 
-  it('loga usuário com sucesso', async () => {
-    const usuarioMock = {
+  it('realiza login com sucesso', async () => {
+    controller.usuarios.push({
       id: 1,
       email: 'user@example.com',
       senha: 'hashFake'
-    };
-    controller.usuarios.push(usuarioMock);
+    });
 
     bcrypt.compare.mockResolvedValue(true);
     jwt.sign.mockReturnValue('tokenFake');
@@ -167,7 +180,7 @@ describe('login', () => {
     expect(res._getJSONData().token).toBe('tokenFake');
   });
 
-  it('retorna erro se usuário não encontrado', async () => {
+  it('retorna erro se usuário não existe', async () => {
     const req = httpMocks.createRequest({
       body: { email: 'naoexiste@example.com', senha: '123456' }
     });
@@ -180,17 +193,16 @@ describe('login', () => {
   });
 
   it('retorna erro se senha inválida', async () => {
-    const usuarioMock = {
+    controller.usuarios.push({
       id: 1,
       email: 'user@example.com',
       senha: 'hashFake'
-    };
-    controller.usuarios.push(usuarioMock);
+    });
 
     bcrypt.compare.mockResolvedValue(false);
 
     const req = httpMocks.createRequest({
-      body: { email: 'user@example.com', senha: 'errada' }
+      body: { email: 'user@example.com', senha: 'senhaerrada' }
     });
     const res = httpMocks.createResponse();
 

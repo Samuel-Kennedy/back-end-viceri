@@ -1,16 +1,7 @@
-const tarefas = [];
-const usuarios = [];
-const state = {
-  tarefaIdCounter: 1,
-  usuarioIdCounter: 1
-};
-
-exports.tarefas = tarefas;
-exports.usuarios = usuarios;
-exports.state = state;
+const knex = require('../database/connection'); // ajuste o caminho conforme necessário
 
 // Criar tarefa
-exports.criarTarefa = (req, res) => {
+exports.criarTarefa = async (req, res) => {
   const { descricao, prioridade } = req.body;
   const usuarioId = req.usuario.id;
 
@@ -23,41 +14,49 @@ exports.criarTarefa = (req, res) => {
     return res.status(400).json({ erro: 'Prioridade inválida. Use Alta, Média ou Baixa.' });
   }
 
-  const novaTarefa = {
-    id: state.tarefaIdCounter++,
-    descricao,
-    prioridade,
-    usuarioId,
-    status: 'pendente',
-  };
+  try {
+    const [id] = await knex('tarefas').insert({
+      descricao,
+      prioridade,
+      usuario_id: usuarioId,
+      status: 'pendente',
+    });
 
-  tarefas.push(novaTarefa);
+    const novaTarefa = await knex('tarefas').where({ id }).first();
 
-  res.status(201).json({ mensagem: 'Tarefa criada com sucesso', tarefa: novaTarefa });
+    return res.status(201).json({ mensagem: 'Tarefa criada com sucesso', tarefa: novaTarefa });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ erro: 'Erro ao criar tarefa' });
+  }
 };
 
 // Listar tarefas pendentes
-exports.listarTarefasPendentes = (req, res) => {
+exports.listarTarefasPendentes = async (req, res) => {
   const usuarioId = req.usuario.id;
-  const { prioridade, status } = req.query;
+  const { prioridade, status = 'pendente' } = req.query;
+  console.log('req.usuario:', req.usuario);
 
-  let resultado = tarefas.filter(t =>
-    t.usuarioId === usuarioId &&
-    t.status === 'pendente'
-  );
+  try {
+    let query = knex('tarefas').where({ usuario_id: usuarioId });
 
-  if (prioridade) {
-    resultado = resultado.filter(t => t.prioridade === prioridade);
+    if (status) {
+      query = query.andWhere('status', status);
+    }
+
+    if (prioridade) {
+      query = query.andWhere('prioridade', prioridade);
+    }
+
+    const tarefas = await query.orderBy('id', 'desc');
+
+    return res.json(tarefas);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ erro: 'Erro ao listar tarefas' });
   }
-
-  if (status) {
-    resultado = resultado.filter(t => t.status === status);
-  }
-
-  resultado.sort((a, b) => b.id - a.id);
-
-  res.json(resultado);
 };
+
 
 // Cadastrar usuário
 exports.cadastrar = (req, res) => {
