@@ -2,7 +2,35 @@ const controller = require('../src/controllers/tarefaController');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const httpMocks = require('node-mocks-http');
-const knex = require('../src/database/connection');
+
+// Mock único e consistente do knex
+jest.mock('../src/database/connection', () => {
+  // Objeto que simula o query builder do knex
+  const mockQueryBuilder = {
+    insert: jest.fn(() => Promise.resolve([1])),
+    where: jest.fn(() => mockQueryBuilder),
+    andWhere: jest.fn(() => mockQueryBuilder),
+    first: jest.fn(() => Promise.resolve({
+      id: 1,
+      descricao: 'Fazer teste',
+      prioridade: 'Alta',
+      usuario_id: 1,
+      status: 'pendente'
+    })),
+    orderBy: jest.fn(() => Promise.resolve([
+      { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' },
+      { id: 2, descricao: 'tarefa2', prioridade: 'Baixa', usuario_id: 1, status: 'pendente' }
+    ]))
+  };
+
+  // Função knex mockada retorna o mockQueryBuilder
+  const knex = jest.fn(() => mockQueryBuilder);
+
+  // Para chamadas diretas como knex('tabela').where(...), ou knex.where(...)
+  Object.assign(knex, mockQueryBuilder);
+
+  return knex;
+});
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
@@ -12,28 +40,6 @@ jest.mock('bcrypt', () => ({
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn()
 }));
-
-// Mock do knex para funções usadas
-jest.mock('../src/database/connection', () => {
-  const mKnex = jest.fn(() => mKnex);
-  mKnex.insert = jest.fn(() => Promise.resolve([1]));
-  mKnex.where = jest.fn(() => Promise.resolve({
-    first: jest.fn(() => Promise.resolve({
-      id: 1,
-      descricao: 'Fazer teste',
-      prioridade: 'Alta',
-      usuario_id: 1,
-      status: 'pendente'
-    }))
-  }));
-  mKnex.andWhere = jest.fn(() => mKnex);
-  mKnex.orderBy = jest.fn(() => Promise.resolve([
-    { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' },
-    { id: 2, descricao: 'tarefa2', prioridade: 'Baixa', usuario_id: 1, status: 'pendente' }
-  ]));
-  mKnex.where = jest.fn(() => mKnex);
-  return mKnex;
-});
 
 describe('criarTarefa', () => {
   it('cria tarefa com dados válidos', async () => {
@@ -95,8 +101,9 @@ describe('listarTarefasPendentes', () => {
   });
 
   it('filtra por prioridade', async () => {
-    // Ajuste do mock para responder só com prioridade 'Alta'
-    knex.orderBy = jest.fn(() => Promise.resolve([
+    // Ajusta o mock para retornar só prioridade 'Alta'
+    const knex = require('../src/database/connection');
+    knex.orderBy.mockImplementation(() => Promise.resolve([
       { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' }
     ]));
 
@@ -116,7 +123,6 @@ describe('listarTarefasPendentes', () => {
 
 describe('cadastrar', () => {
   beforeEach(() => {
-    // Limpa array de usuários para cada teste
     controller.usuarios.length = 0;
     bcrypt.hash.mockClear();
   });

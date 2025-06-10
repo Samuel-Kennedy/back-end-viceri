@@ -1,4 +1,10 @@
 const knex = require('../database/connection'); // ajuste o caminho conforme necessário
+const usuarios = [];
+const state = { usuarioIdCounter: 1 }; // já é usado na função cadastrar
+const bcrypt = require('bcrypt');
+
+exports.usuarios = usuarios;
+exports.state = state;
 
 // Criar tarefa
 exports.criarTarefa = async (req, res) => {
@@ -58,8 +64,7 @@ exports.listarTarefasPendentes = async (req, res) => {
 };
 
 
-// Cadastrar usuário
-exports.cadastrar = (req, res) => {
+exports.cadastrar = async (req, res) => {
   const { nome, email, senha } = req.body;
 
   if (!nome || !email || !senha) {
@@ -71,17 +76,20 @@ exports.cadastrar = (req, res) => {
     return res.status(400).json({ erro: 'Email já cadastrado' });
   }
 
+  const senhaHash = await bcrypt.hash(senha, 10);
+
   const novoUsuario = {
     id: state.usuarioIdCounter++,
     nome,
     email,
-    senha: 'hashFake', // <- simula senha com hash para bater com o teste
+    senha: senhaHash
   };
 
   usuarios.push(novoUsuario);
 
-  res.status(201).json({ mensagem: 'Usuário criado com sucesso', usuario: novoUsuario });
+  return res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
 };
+
 
 // Login
 exports.login = (req, res) => {
