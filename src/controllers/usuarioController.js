@@ -1,43 +1,61 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-const usuarios = []; // vai guardar usuários na memória por enquanto
+const knex = require('../database/connection');
 
 exports.cadastrar = async (req, res) => {
   const { nome, email, senha } = req.body;
 
-  if (usuarios.find(u => u.email === email)) {
-    return res.status(400).json({ erro: 'Email já cadastrado' });
+  try {
+    const usuarioExistente = await knex('usuarios').where({ email }).first();
+    if (usuarioExistente) {
+      return res.status(400).json({ erro: 'Email já cadastrado' });
+    }
+
+    const hashSenha = await bcrypt.hash(senha, 10);
+
+    const [id] = await knex('usuarios').insert({
+      nome,
+      email,
+      senha: hashSenha
+    });
+
+    await knex('tarefas').insert({
+      descricao: 'Tarefa inicial automática',
+      prioridade: 'Média',
+      usuario_id: id,
+      status: 'pendente'
+    });
+
+    return res.status(201).json({ mensagem: 'Usuário criado com sucesso e tarefa inicial adicionada', id });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ erro: 'Erro ao cadastrar usuário ou criar tarefa' });
   }
-
-  const hashSenha = await bcrypt.hash(senha, 10);
-
-  const novoUsuario = {
-    id: usuarios.length + 1,
-    nome,
-    email,
-    senha: hashSenha
-  };
-
-  usuarios.push(novoUsuario);
-
-  res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
 };
+
+
 
 exports.login = async (req, res) => {
-  console.log('JWT_SECRET no login:', process.env.JWT_SECRET); // <--- aqui
-
   const { email, senha } = req.body;
 
-  const usuario = usuarios.find(u => u.email === email);
-  if (!usuario) return res.status(400).json({ erro: 'Usuário não encontrado' });
+  try {
+    const usuario = await knex('usuarios').where({ email }).first();
+    if (!usuario) {
+      return res.status(400).json({ erro: 'Usuário não encontrado' });
+    }
 
-  const senhaValida = await bcrypt.compare(senha, usuario.senha);
-  if (!senhaValida) return res.status(400).json({ erro: 'Senha inválida' });
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaValida) {
+      return res.status(400).json({ erro: 'Senha inválida' });
+    }
 
-  const token = jwt.sign({ id: usuario.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: usuario.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h'
+    });
 
-  res.json({ token });
+    return res.json({ token });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ erro: 'Erro no login' });
+  }
 };
-
-exports.usuarios = usuarios;

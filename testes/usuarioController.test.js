@@ -2,16 +2,24 @@ const controller = require('../src/controllers/usuarioController');
 const httpMocks = require('node-mocks-http');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const knex = require('../src/database/connection');
 
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
+jest.mock('../src/database/connection');
 
 beforeEach(() => {
-  controller.usuarios.length = 0; // limpa usuários
+  jest.clearAllMocks();
 });
 
 describe('cadastrar', () => {
   it('cadastra usuário com sucesso', async () => {
+    knex.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined),
+      insert: jest.fn().mockResolvedValue([1])
+    }));
+
     bcrypt.hash.mockResolvedValue('hashFake');
 
     const req = httpMocks.createRequest({
@@ -27,18 +35,20 @@ describe('cadastrar', () => {
     await controller.cadastrar(req, res);
 
     expect(res.statusCode).toBe(201);
-    expect(res._getJSONData().mensagem).toBe('Usuário criado com sucesso');
-    expect(controller.usuarios.length).toBe(1);
-    expect(controller.usuarios[0].senha).toBe('hashFake');
+    expect(res._getJSONData().mensagem).toBe('Usuário criado com sucesso e tarefa inicial adicionada');
+    expect(res._getJSONData().id).toBe(1);
   });
 
   it('retorna erro se email já existe', async () => {
-    controller.usuarios.push({
-      id: 1,
-      nome: 'Usuário existente',
-      email: 'existente@example.com',
-      senha: 'qualquercoisa'
-    });
+    knex.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue({
+        id: 1,
+        nome: 'Usuário Existente',
+        email: 'existente@example.com',
+        senha: 'hashSenha'
+      })
+    }));
 
     const req = httpMocks.createRequest({
       method: 'POST',
@@ -59,12 +69,15 @@ describe('cadastrar', () => {
 
 describe('login', () => {
   it('loga usuário com sucesso', async () => {
-    controller.usuarios.push({
-      id: 1,
-      nome: 'Samuel',
-      email: 'samuel@example.com',
-      senha: 'senhaHashFake'
-    });
+    knex.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue({
+        id: 1,
+        nome: 'Samuel',
+        email: 'samuel@example.com',
+        senha: 'senhaHashFake'
+      })
+    }));
 
     bcrypt.compare.mockResolvedValue(true);
     jwt.sign.mockReturnValue('tokenFake');
@@ -85,6 +98,11 @@ describe('login', () => {
   });
 
   it('retorna erro se usuário não encontrado', async () => {
+    knex.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined)
+    }));
+
     const req = httpMocks.createRequest({
       method: 'POST',
       body: {
@@ -101,12 +119,15 @@ describe('login', () => {
   });
 
   it('retorna erro se senha inválida', async () => {
-    controller.usuarios.push({
-      id: 1,
-      nome: 'Samuel',
-      email: 'samuel@example.com',
-      senha: 'senhaHashFake'
-    });
+    knex.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue({
+        id: 1,
+        nome: 'Samuel',
+        email: 'samuel@example.com',
+        senha: 'senhaHashFake'
+      })
+    }));
 
     bcrypt.compare.mockResolvedValue(false);
 
