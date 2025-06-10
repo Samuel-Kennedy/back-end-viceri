@@ -3,9 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const httpMocks = require('node-mocks-http');
 
-// Mock único e consistente do knex
 jest.mock('../src/database/connection', () => {
-  // Objeto que simula o query builder do knex
   const mockQueryBuilder = {
     insert: jest.fn(() => Promise.resolve([1])),
     where: jest.fn(() => mockQueryBuilder),
@@ -23,7 +21,6 @@ jest.mock('../src/database/connection', () => {
     ]))
   };
 
-  // Função knex mockada retorna o mockQueryBuilder
   const knex = jest.fn(() => mockQueryBuilder);
 
   Object.assign(knex, mockQueryBuilder);
@@ -100,7 +97,6 @@ describe('listarTarefasPendentes', () => {
   });
 
   it('filtra por prioridade', async () => {
-    // Ajusta o mock para retornar só prioridade 'Alta'
     const knex = require('../src/database/connection');
     knex.orderBy.mockImplementation(() => Promise.resolve([
       { id: 1, descricao: 'tarefa1', prioridade: 'Alta', usuario_id: 1, status: 'pendente' }

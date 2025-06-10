@@ -27,8 +27,7 @@ describe('Middleware autenticarToken', () => {
 
   it('deve retornar 403 se token for inválido', () => {
     req.headers['authorization'] = 'Bearer tokenInvalido';
-
-    // Mock do jwt.verify para simular erro de token inválido
+    
     jwt.verify = jest.fn((token, secret, callback) => callback(new Error('Token inválido'), null));
 
     autenticarToken(req, res, next);

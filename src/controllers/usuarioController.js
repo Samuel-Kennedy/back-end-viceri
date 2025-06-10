@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const knex = require('../database/connection'); // ajuste o caminho conforme necessário
+const knex = require('../database/connection');
 
 exports.cadastrar = async (req, res) => {
   const { nome, email, senha } = req.body;

@@ -2,7 +2,7 @@ const controller = require('../src/controllers/usuarioController');
 const httpMocks = require('node-mocks-http');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const knex = require('../src/database/connection'); // ajuste o caminho conforme seu projeto
+const knex = require('../src/database/connection');
 
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
@@ -14,7 +14,6 @@ beforeEach(() => {
 
 describe('cadastrar', () => {
   it('cadastra usuário com sucesso', async () => {
-    // Mocka o knex para não encontrar email (retorna undefined)
     knex.mockImplementation(() => ({
       where: jest.fn().mockReturnThis(),
       first: jest.fn().mockResolvedValue(undefined),
@@ -41,7 +40,6 @@ describe('cadastrar', () => {
   });
 
   it('retorna erro se email já existe', async () => {
-    // Mocka o knex para encontrar email já cadastrado
     knex.mockImplementation(() => ({
       where: jest.fn().mockReturnThis(),
       first: jest.fn().mockResolvedValue({
@@ -71,7 +69,6 @@ describe('cadastrar', () => {
 
 describe('login', () => {
   it('loga usuário com sucesso', async () => {
-    // Mocka o knex para encontrar usuário
     knex.mockImplementation(() => ({
       where: jest.fn().mockReturnThis(),
       first: jest.fn().mockResolvedValue({

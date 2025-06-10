@@ -1,12 +1,11 @@
-const knex = require('../database/connection'); // ajuste o caminho conforme necessário
+const knex = require('../database/connection');
 const usuarios = [];
-const state = { usuarioIdCounter: 1 }; // já é usado na função cadastrar
+const state = { usuarioIdCounter: 1 };
 const bcrypt = require('bcrypt');
 
 exports.usuarios = usuarios;
 exports.state = state;
 
-// Criar tarefa
 exports.criarTarefa = async (req, res) => {
   const { descricao, prioridade } = req.body;
   const usuarioId = req.usuario.id;
@@ -37,7 +36,6 @@ exports.criarTarefa = async (req, res) => {
   }
 };
 
-// Listar tarefas pendentes
 exports.listarTarefasPendentes = async (req, res) => {
   const usuarioId = req.usuario.id;
   const { prioridade, status = 'pendente' } = req.query;
@@ -90,8 +88,6 @@ exports.cadastrar = async (req, res) => {
   return res.status(201).json({ mensagem: 'Usuário criado com sucesso' });
 };
 
-
-// Login
 exports.login = (req, res) => {
   const { email, senha } = req.body;
 
