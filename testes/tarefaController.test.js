@@ -26,7 +26,6 @@ jest.mock('../src/database/connection', () => {
   // Função knex mockada retorna o mockQueryBuilder
   const knex = jest.fn(() => mockQueryBuilder);
 
-  // Para chamadas diretas como knex('tabela').where(...), ou knex.where(...)
   Object.assign(knex, mockQueryBuilder);
 
   return knex;

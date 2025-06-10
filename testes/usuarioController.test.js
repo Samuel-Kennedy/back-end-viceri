@@ -36,7 +36,7 @@ describe('cadastrar', () => {
     await controller.cadastrar(req, res);
 
     expect(res.statusCode).toBe(201);
-    expect(res._getJSONData().mensagem).toBe('Usuário criado com sucesso');
+    expect(res._getJSONData().mensagem).toBe('Usuário criado com sucesso e tarefa inicial adicionada');
     expect(res._getJSONData().id).toBe(1);
   });
 

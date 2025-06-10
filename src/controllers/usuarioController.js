@@ -6,7 +6,6 @@ exports.cadastrar = async (req, res) => {
   const { nome, email, senha } = req.body;
 
   try {
-    // Verificar se email já está cadastrado no banco
     const usuarioExistente = await knex('usuarios').where({ email }).first();
     if (usuarioExistente) {
       return res.status(400).json({ erro: 'Email já cadastrado' });
@@ -20,12 +19,20 @@ exports.cadastrar = async (req, res) => {
       senha: hashSenha
     });
 
-    return res.status(201).json({ mensagem: 'Usuário criado com sucesso', id });
+    await knex('tarefas').insert({
+      descricao: 'Tarefa inicial automática',
+      prioridade: 'Média',
+      usuario_id: id,
+      status: 'pendente'
+    });
+
+    return res.status(201).json({ mensagem: 'Usuário criado com sucesso e tarefa inicial adicionada', id });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ erro: 'Erro ao cadastrar usuário' });
+    return res.status(500).json({ erro: 'Erro ao cadastrar usuário ou criar tarefa' });
   }
 };
+
 
 
 exports.login = async (req, res) => {
